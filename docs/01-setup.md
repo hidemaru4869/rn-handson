@@ -1,76 +1,85 @@
 # 01 Setup - React Native + Expo 初期構築
 
-## 🎯 ゴール
+## ゴール
 
-- Expo で空プロジェクトを作成できる
+- devcontainer から Expo を起動できる
 - Expo Go で実機確認できる
-- Fast Refresh の動作を理解する
+- Fast Refresh の仕組みを説明できる
 
----
+## 手順
 
-## 🛠 実行コマンド
+前章はないので、まず開発環境の前提を固める。
 
-### プロジェクト作成
+用語定義:
+- devcontainer: ローカル Mac 上で動く開発用コンテナ環境。実行はコンテナ内だが、端末はコンテナ外にある。
+- tunnel: コンテナ内サーバへ端末から到達するための中継経路。LAN 経由より安定する。
+- Expo Go: 端末に入れる実行アプリ。開発中の JS を受け取って実行する。
+- Fast Refresh: 変更したモジュールを差し替え、アプリ全体を再起動せずに反映する機構。
 
-`npx create-expo-app rn-handson --template blank-typescript`
+補足:
+devcontainer 内の IP（例: 172.x.x.x）は LAN から直接アクセスできない。
+そのため Expo CLI は ngrok を使って外部公開 URL を生成する。
 
-### 起動
+1. Expo プロジェクトを作成する
 
+```bash
+npx create-expo-app rn-handson --template blank-typescript
 ```
+
+2. devcontainer 内で起動する
+
+```bash
 cd rn-handson
-npx expo start
+npx expo start --tunnel
 ```
 
----
+3. Expo Go で実機起動する
 
-## 📱 実機確認（Expo Go）
+- Expo Go を起動し、表示された QR を読み取る
+- 端末でアプリが起動することを確認する
 
-1. App Store で Expo Go をインストール
-2. 同じWi-Fiに接続
-3. QRコードを読み取り
+実行フロー:
 
----
+```mermaid
+flowchart LR
+  Mac[ローカル Mac] --> Devcontainer[devcontainer]
+  Devcontainer -->|expo start --tunnel| ExpoCLI[Expo CLI]
+  ExpoCLI --> Metro[Metro bundler]
+  Metro --> Tunnel[Tunnel]
+  Tunnel --> ExpoGo[Expo Go]
+  ExpoGo --> RN[React Native ランタイム]
+  RN --> UI[ネイティブ UI]
+```
 
-## 🔁 開発ループの理解
+実装例:
 
-1. コードを書く
-2. 保存する
-3. Fast Refresh で即反映
+`App.tsx` の表示を変えて Fast Refresh を体験する。
 
-→ ビルド不要で反映されるのがExpoの強み
+```tsx
+import { View, Text } from "react-native";
 
----
+export default function App() {
+  return (
+    <View style={{ padding: 24 }}>
+      <Text>Fast Refresh OK</Text>
+    </View>
+  );
+}
+```
 
-## 🌐 Web React との違い
+## 詰まりポイント
 
-| Web React    | React Native |
-| ------------ | ------------ |
-| ブラウザ表示 | Expo Go      |
-| div          | View         |
-| p / span     | Text         |
-| CSS          | StyleSheet   |
-| localhost    | LAN経由      |
+- `--tunnel` 未使用だと端末から到達できない場合がある
+- Expo Go が古いと QR を読めても起動に失敗する
+- 反映されない場合は Metro の再起動が必要になることがある
 
----
+## Webとの差分
 
-## ⚠ 詰まりポイント
+- Web は `localhost` に直接アクセスできるが、RN は端末に配信する必要がある
+- Web の HMR はブラウザ前提だが、RN は Metro と Expo Go の組み合わせで動く
 
-- 同一Wi-Fiでないと繋がらない
-- VPNが干渉する場合がある
-- Firewallで通信ブロックされることがある
+## 振り返り
 
----
-
-## 🧠 理解メモ
-
-- Expoは「開発ランタイム」
-- React Nativeは「UIレンダリングエンジン」
-- Expo Goは「実機テスト用アプリ」
-
----
-
-## ✅ チェックリスト
-
-- [ ] QRで起動できた
-- [ ] 文字変更が即反映された
-- [ ] 開発ループを理解した
+- devcontainer と端末の間に tunnel が必要な理由を説明できるか
+- Fast Refresh が「差分配信」であることを言語化できるか
+- 次はプロジェクト構成を理解する
